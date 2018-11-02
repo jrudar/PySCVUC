@@ -1,14 +1,14 @@
 # PySCVUC
 A Python3 implementation of the SCVUC amplicon sequencing pipeline which is maintained by Dr. Teresita M. Porter.
 
-Based upon the repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link. At the moment, PySCVUC only works for paired end reads. An option will be available in the future to make use of single end reads.
+Based upon the SCVUC repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link.
 
-Denoising and classification pipeline for paired amplicon sequencing data. In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programsmust be in your path. In addition, this pipeline is compatable with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
+This pipeline denoises and classifies COI metabarcode data produced using the Illumina MiSeq platform. It currently supports only paired end reads, however support for single end reads will be included in the future. Ultimatly, this pipeline produces a set of Exact Sequence Variants (ESVs) which are then identified down to the species rank using the RDP Classifier and the COI V3.2 Training Set (Porter & Hajibabaei, 2018 Sci Rep). In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programs must be in your path. In addition, this pipeline is compatable with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
 
 ## Install:
 1) Clone this repository to your home directory.
-2) Download and install the above programs.
-3) Download and install the above Python libraries.
+2) Install the above programs.
+3) Install the above Python libraries.
 4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch). The path to the RDP Tools .jar files should be as follows: export CLASSPATH=Path to the RDP Tools Directory/:$CLASSPATH
 5) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
 6) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
@@ -67,3 +67,9 @@ Denoising and classification pipeline for paired amplicon sequencing data. In or
 ````Optional. Default is $HOME. The path to the directory containing the PySCVUC diretory.````
                         
 ````Example Usage: --PySCVUC /home/scripts/````
+
+## Future Work:
+
+- Support Single End Reads
+- Support Multiple Training Sets (16S, ITS, etc)
+- Clean Up and Improve Readability of the Code
