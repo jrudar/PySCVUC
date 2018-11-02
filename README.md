@@ -5,20 +5,20 @@ Based upon the repository by Dr. Teresita M. Porter (https://github.com/EcoBiomi
 
 Denoising and classification pipeline for paired amplicon sequencing data. In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programsmust be in your path. In addition, this pipeline is compatable with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
 
-# Install:
+## Install:
 1) Clone this repository to your home directory.
 2) Download and install the above programs.
 3) Download and install the above Python libraries.
-4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch). The path to the RDP Tools .jar files should be as follows: export CLASSPATH=<PATH TO RDP TOOLS>/:$CLASSPATH
+4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch). The path to the RDP Tools .jar files should be as follows: export CLASSPATH=Path to the RDP Tools Directory/:$CLASSPATH
 5) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
 6) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
 
-# Command Line Options: 
+## Command Line Options: 
 --primers PRIMERS
 
-*Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.
+[Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.
 
-*Example Usage: --primers ATCGATCG-ATCGATCG
+Example Usage: --primers ATCGATCG-ATCGATCG]
 
 --amplicon_names AMPLICON_NAMES
 
