@@ -1,7 +1,7 @@
 # PySCVUC
 A Python3 implementation of the SCVUC amplicon sequencing pipeline which is maintained by Dr. Teresita M. Porter.
 
-Based upon the repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link. At the moment, this pipeline only works for paired end reads. An option will be available in the future to make use of single end reads.
+Based upon the repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link. At the moment, PySCVUC only works for paired end reads. An option will be available in the future to make use of single end reads.
 
 Denoising and classification pipeline for paired amplicon sequencing data. In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programsmust be in your path. In addition, this pipeline is compatable with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
 
