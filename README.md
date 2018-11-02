@@ -12,37 +12,64 @@ Install:
 4) Edit your .bashrc file found in your home directory so the following paths are present:
 
 export PATH=<PATH TO USEARCH10>/:$PATH
-export PATH=<PATH TO VSEARCH 2.8.2>/bin/:$PATH
-export PATH=<PATH TO RDP TOOLS>/:$PATH
-export PATH=<PATH TO PySCVUC>/:$PATH
-export CLASSPATH=/home/joe/bin/RDPTools/:$CLASSPATH
-  
+export PATH=<PATH TO VSEARCH>/bin/:$PATH
+export PATH=<PATH TO RDP TOOLS>/$PATH
+export PATH=<PATH TO PySCVUC>/$PATH
+export CLASSPATH=<PATH TO RDP TOOLS>/:$CLASSPATH
+
 5) Install the specified Python libraries: NumPy, SciPy, Pandas, and BioPython
 
 Command Line Options:
---primers PRIMERS       The primer sequences which will be trimmed by
-                        CutAdapt. Each sequences should be separated by a
-                        dash.
+--primers PRIMERS
+
+Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.
+
+Example Usage: --primers ATCGATCG-ATCGATCG
+
 --amplicon_names AMPLICON_NAMES
-                        The name of each primer sequence. Each name should be
-                        separated by a dash.
---n N                 The stringency setting for CutAdapt. (Default: 3)
---classifier CLASSIFIER     
-                        The name of the classifier to use (Default: V3).
---threads THREADS     The number of threads to spawn. (Default: 10)
---indices INDICES     The index values in the filename which correspond to
-                      the sample name. Each index should be separated by a
-                      dash.
+
+Required. This option specifies the name for each amplicon. Each name should be separated by a dash.
+
+Example Usage: --amplicon_names ForwardPrimer-ReversePrimer
+
+--n N
+
+Optional. Default is 3. This option controls the number of mismatches that CutAdapt will allow.
+
+Example Usage: --n 3
+
+--classifier CLASSIFIER
+
+Optional. Default is V3. The name of the training set which will be used. Currently, only the V3 COI Training Set is hard-coded. However, adding additonal training sets is very easy.
+
+Example Usage: --classifier V3
+
+--threads THREADS
+
+Optional. Default is 10. This option controls the number of threads which will be used for SeqPrep, CutAdapt, and VSearch.
+
+Example Usage: --threads 10
+
+--indices INDICES
+
+Required. This option identifies the sample name from the file name of the fastq.gz files. For example, if the fastq.gz files are: COI-Sample-ID_S1_L001_R1_001.fastq.gz and COI-Sample-ID_S1_L001_R2_001.fastq.gz, the sample index would be 1-2. These correspond to the words Sample and ID. Currently, file naming conventions are very strict and all input files must end with L001_R1_001.fastq.gz or L001_R2_001.fastq.gz.
+
+Example Usage: --indices 1-2
+
 --input_dir INPUT_DIR
-                      The directory which contains the fastq.gz files.
+
+Required. This option specifies the path to the directory which contains the fastq.gz files.
+
+Example Usage: /home/data_set/fastq
+
 --results_dir RESULTS_DIR
-                      The output directory.
+
+Required. This option specifies the path to the directory which will store the results of the taxonomic assignment.
+
+Example Usage: /home/data_set/results
+
 --PySCVUC_Path PYSCVUC_PATH
-                        The path to the directory containing the PySCVUC
-                        Directory (Default: Home directory).
+
+Optional. Default is $HOME. The path to the directory containing the PySCVUC diretory.
                         
-Example Usage: 
-
-If the fastq.gz files are: COI-Sample-ID_S1_L001_R1_001.fastq.gz and COI-Sample-ID_S1_L001_R2_001.fastq.gz, the sample index (--indices option) would be 1-2. These correspond to the words Sample and ID.
-
-PySCVUC.py --primers ATCGATCG-CGATCGAT --amplicon_names ForwardPrimer-ReversePrimer --classifier V3 --indices 1-2 --input_dir /home/seqdata --results_dir /home/seqresults
+Example Usage: --PySCVUC /home/scripts/
