@@ -12,6 +12,8 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch, RDP Tools). An additonal classpath to the RDP Tools .jar files should be included (export CLASSPATH=Path to the RDP Tools Directory/:$CLASSPATH).
 5) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
 6) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
+7) Enter the PySCVUC directory and run ./configure.sh.
+8) The latest version of the COI Training Files should be downloaded. Extract these files to the 'PySCVUC/training_files/V3/' directory.
 
 ## Command Line Options: 
 ##### --primers PRIMERS
