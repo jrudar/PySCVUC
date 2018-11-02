@@ -20,25 +20,24 @@ export CLASSPATH=/home/joe/bin/RDPTools/:$CLASSPATH
 5) Install the specified Python libraries: NumPy, SciPy, Pandas, and BioPython
 
 Command Line Options:
-
-  --primers PRIMERS     The primer sequences which will be trimmed by
+--primers PRIMERS       The primer sequences which will be trimmed by
                         CutAdapt. Each sequences should be separated by a
                         dash.
-  --amplicon_names AMPLICON_NAMES
+--amplicon_names AMPLICON_NAMES
                         The name of each primer sequence. Each name should be
                         separated by a dash.
-  --n N                 The stringency setting for CutAdapt. (Default: 3)
-  --classifier CLASSIFIER     
+--n N                 The stringency setting for CutAdapt. (Default: 3)
+--classifier CLASSIFIER     
                         The name of the classifier to use (Default: V3).
-  --threads THREADS     The number of threads to spawn. (Default: 10)
-  --indices INDICES     The index values in the filename which correspond to
-                        the sample name. Each index should be separated by a
-                        dash.
-  --input_dir INPUT_DIR
-                        The directory which contains the fastq.gz files.
-  --results_dir RESULTS_DIR
-                        The output directory.
-  --PySCVUC_Path PYSCVUC_PATH
+--threads THREADS     The number of threads to spawn. (Default: 10)
+--indices INDICES     The index values in the filename which correspond to
+                      the sample name. Each index should be separated by a
+                      dash.
+--input_dir INPUT_DIR
+                      The directory which contains the fastq.gz files.
+--results_dir RESULTS_DIR
+                      The output directory.
+--PySCVUC_Path PYSCVUC_PATH
                         The path to the directory containing the PySCVUC
                         Directory (Default: Home directory).
                         
