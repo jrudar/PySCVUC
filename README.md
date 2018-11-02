@@ -3,7 +3,7 @@ A Python3 implementation of the SCVUC amplicon sequencing pipeline which is main
 
 Based upon the SCVUC repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link.
 
-This pipeline denoises and classifies COI metabarcode data produced using the Illumina MiSeq platform. It currently supports only paired end reads, however support for single end reads will be included in the future. Ultimatly, this pipeline produces a set of Exact Sequence Variants (ESVs) which are then identified down to the species rank using the RDP Classifier and the COI V3.2 Training Set (Porter & Hajibabaei, 2018 Sci Rep). In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programs must be in your path. In addition, this pipeline has been tested with with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
+This pipeline denoises and classifies COI metabarcode data produced using the Illumina MiSeq platform. It currently supports only paired end reads, however support for single end reads will be included in the future. Ultimatly, this pipeline produces a set of Exact Sequence Variants (ESVs) which are then identified down to the species rank using the RDP Classifier and the COI V3.2 Training Set (Porter & Hajibabaei, 2018 Sci Rep). This pipeline can also automatically demultiplex (the "primer" in this case needs to include the unique tag). In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programs must be in your path. In addition, this pipeline has been tested with with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
 
 ## Install:
 1) Clone this repository to your home directory.
@@ -81,6 +81,7 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 - Support Single End Reads
 - Support Multiple Training Sets (16S, ITS, etc)
 - Clean Up and Improve Readability of the Code
+- Automatically Reverse Complement the Reverse Primer
 
 ## References:
 
