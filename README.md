@@ -44,6 +44,12 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 
 ````Example Usage: --threads 10````
 
+##### --pe_names PE_NAMES
+
+````Optional. Default is L001_R1_001-L001_R2_001. This option specifies the string which will identify each pair of reads.````
+
+````Example Usage: ----pe_names L001_R1_001-L001_R2_001````
+
 ##### --indices INDICES
 
 ````Required. This option identifies the sample name from the file name of the fastq.gz files. For example, if the fastq.gz files are: COI-Sample-ID_S1_L001_R1_001.fastq.gz and COI-Sample-ID_S1_L001_R2_001.fastq.gz, the sample index would be 1-2. These correspond to the words Sample and ID. Currently, file naming conventions are very strict and all input files must end with L001_R1_001.fastq.gz or L001_R2_001.fastq.gz.````
