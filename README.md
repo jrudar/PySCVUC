@@ -19,7 +19,7 @@ export CLASSPATH=<PATH TO RDP TOOLS>/:$CLASSPATH
 
 5) Install the specified Python libraries: NumPy, SciPy, Pandas, and BioPython
 
-Command Line Options:
+Command Line Options: 
 --primers PRIMERS
 
 Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.
