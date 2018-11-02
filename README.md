@@ -18,7 +18,7 @@ Denoising and classification pipeline for paired amplicon sequencing data. In or
 
 ````Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.````
 
-````Example Usage: --primers ATCGATCG-ATCGATCG]````
+````Example Usage: --primers ATCGATCG-ATCGATCG````
 
 ##### --amplicon_names AMPLICON_NAMES
 
