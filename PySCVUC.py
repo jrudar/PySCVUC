@@ -428,11 +428,19 @@ class NGSPipelineStats:
         This function runs all the stats - min, max, mean, median, 
         and mode on a numpy array
         """
-        min_len = np_array.min() #Find the smallest value
-        max_len = np_array.max() #Find the largest value
-        mean_len = np_array.mean() #Find the mean
-        mode_len = int(mode(np_array)[0]) #Find the mode value
-        median_len = np.median(np_array) #Find the median value
+        try:
+            min_len = np_array.min() #Find the smallest value
+            max_len = np_array.max() #Find the largest value
+            mean_len = np_array.mean() #Find the mean
+            mode_len = int(mode(np_array)[0]) #Find the mode value
+            median_len = np.median(np_array) #Find the median value
+
+        except:
+            min_len = 0
+            max_len = 0
+            mean_len = 0
+            mode_len = 0
+            median_len = 0
 
         return min_len, max_len, mean_len, median_len, mode_len 
 
