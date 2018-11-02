@@ -73,3 +73,7 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 - Support Single End Reads
 - Support Multiple Training Sets (16S, ITS, etc)
 - Clean Up and Improve Readability of the Code
+
+## References:
+
+Porter, T. M., & Hajibabaei, M. (2018). Automated high throughput animal CO1 metabarcode classification. Scientific Reports, 8, 4226. Available from https://github.com/terrimporter/CO1Classifier
