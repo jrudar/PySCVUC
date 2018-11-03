@@ -10,11 +10,10 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 2) Install the above programs.
 3) Install the above Python libraries.
 4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch).
-5) Edit your .bashrc file so the following is present: export RDPPATH=Path/to/RDPTools/
-6) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
-7) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
-8) Enter the PySCVUC directory and run ./configure.sh.
-9) The latest version of the COI Training Files should be downloaded. Extract these files to the 'PySCVUC/training_files/V3/' directory.
+5) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
+6) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
+7) Enter the PySCVUC directory and run ./configure.sh.
+8) The latest version of the COI Training Files should be downloaded. Extract these files to the 'PySCVUC/training_files/V3/' directory.
 
 ## Command Line Options: 
 ##### --primers PRIMERS
@@ -75,13 +74,13 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 
 ````Optional. Default is $HOME. The path to the directory containing the PySCVUC diretory.````
                         
-````Example Usage: --PySCVUC /home/scripts/````
+````Example Usage: --PySCVUC_Path /home/scripts/````
 
 ##### --RDPClf_Path RDPCLF_PATH
 
-````Optional. Default is $RDPPath. The path to the directory containing the RDP Classifier.````
+````Required. The path to the directory containing the RDP Classifier.````
                         
-````Example Usage: --PySCVUC /home/RDPTools/````
+````Example Usage: --RDPClf_Path /home/RDPTools/classifier.jar````
 
 ## Future Work:
 
