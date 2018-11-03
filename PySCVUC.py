@@ -36,6 +36,8 @@ import gzip
 from re import compile
 
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
 
 from multiprocessing import Pool
 
@@ -64,6 +66,21 @@ parser.add_argument("--PySCVUC_Path", help = "The path to the directory containi
 #########################################################################
 "Utility Functions"
 #########################################################################
+def change_inosine(primer):
+    
+    new_primer = "".join([x if x != "I" else "D" for x in primer])
+
+    return new_primer
+
+def reverse_complement(primer):
+
+    new_primer = Seq("".join([x if x != "I" else "D" for x in primer]),
+                     generic_dna)
+
+    new_primer = str(new_primer.reverse_complement())
+    
+    return new_primer
+
 def fix_headers(fa_file):
     "Rename each file and correct the headers of each FASTA file"
 
@@ -115,15 +132,20 @@ def fix_zotu(fa_file):
     counter = 1
 
     with open("cat.mod.denoised", "w") as file:
-        for record in SeqIO.parse(fa_file, "fasta"):
-            new_header = ">Otu%s" %str(counter)
+        with open("cat.original.denoised", "r") as infile:
+            data = infile.readlines()
 
-            seq = str(record.seq)
+            for line in data:
+                new_line = None
 
-            print (new_header, file = file)
-            print (seq, file = file)
+                if ">" in line:
+                    new_line = ">Otu%s" %str(counter)
+                    counter += 1
 
-            counter += 1
+                else:
+                    new_line = line.strip("\n")
+
+                print (new_line, file = file)
     
 #########################################################################
 "Pipeline statistics object and related functions"
@@ -728,10 +750,13 @@ while True:
 
     print (' ')
     print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
+
+    new_primer = change_inosine(primer_pairs[primer_index])
+
     dir_files =  get_fnames("paired.fastq.gz")
     cut_commands = []
     for file_name in dir_files:
-        cut_commands.append("cutadapt -g %s -m 150 -q 20,20 --max-n=%s --discard-untrimmed %s -o %s.Ftrimmed.fastq.gz" %(primer_pairs[primer_index], str(n_val), file_name, file_name))
+        cut_commands.append("cutadapt -g %s -m 150 -q 20,20 --max-n=%s --discard-untrimmed %s -o %s.Ftrimmed.fastq.gz" %(new_primer, str(n_val), file_name, file_name))
 
     workers = Pool(int(n_threads))
     workers.map(subprocess_command, cut_commands)
@@ -752,13 +777,15 @@ while True:
     print (' ')
     print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
     
+    new_primer = reverse_complement(primer_pairs[primer_index])
+
     dir_name = amplicons[primer_index] + "_Trimmed"
     if not exists(dir_name): makedirs(dir_name)
      
     dir_files =  get_fnames("Ftrimmed.fastq.gz")
     cut_commands = []
     for file_name in dir_files:
-        cut_commands.append("cutadapt -a %s -m 150 -q 20,20 --max-n=%s  --discard-untrimmed %s -o %s.Rtrimmed.fasta.gz" %(primer_pairs[primer_index], str(n_val), file_name, file_name))
+        cut_commands.append("cutadapt -a %s -m 150 -q 20,20 --max-n=%s  --discard-untrimmed %s -o %s.Rtrimmed.fasta.gz" %(new_primer, str(n_val), file_name, file_name))
 
     workers = Pool(int(n_threads))
     workers.map(subprocess_command, cut_commands)
