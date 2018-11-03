@@ -18,7 +18,7 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 ## Command Line Options: 
 ##### --primers PRIMERS
 
-````Required. This option specifies the primers which will be used. Each primer should be separated by a dash. Currently the reverse primer is reverse complimented.````
+````Required. This option specifies the primers which will be used. Each primer should be separated by a dash. This pipeline automatically reverse complements the reverse primer.````
 
 ````Example Usage: --primers ATCGATCG-ATCGATCG````
 
@@ -81,7 +81,6 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 - Support Single End Reads
 - Support Multiple Training Sets (16S, ITS, etc)
 - Clean Up and Improve Readability of the Code
-- Automatically Reverse Complement the Reverse Primer
 
 ## References:
 
