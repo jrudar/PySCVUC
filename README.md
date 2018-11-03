@@ -10,7 +10,7 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 2) Install the above programs.
 3) Install the above Python libraries.
 4) Edit your .bashrc file and export the paths to external dependencies (USearch, VSearch).
-5) Edit your .bashrc file so the following is present: export RDPPATH=<Path to the RDP Tools Directory>/
+5) Edit your .bashrc file so the following is present: export RDPPATH=Path/to/RDPTools/
 6) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
 7) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
 8) Enter the PySCVUC directory and run ./configure.sh.
