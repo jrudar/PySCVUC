@@ -62,6 +62,7 @@ parser.add_argument("--indices", help = "The index values in the filename which 
 parser.add_argument("--input_dir", help = "The directory which contains the fastq.gz files.", required = True)
 parser.add_argument("--results_dir", help = "The output directory.", required = True)
 parser.add_argument("--PySCVUC_Path", help = "The path to the directory containing the PySCVUC Directory (Default: Home directory).", default = "$HOME")
+parser.add_argument("--RDPClf_Path", help = "The path to the directory containing the RDP Classifier (Default: $RDPPATH).", default = "$RDPPATH")
 
 #########################################################################
 "Utility Functions"
@@ -566,9 +567,10 @@ print (parser.parse_args())
 args = parser.parse_args()
 
 install_path = vars(args)["PySCVUC_Path"]
+rdp_path = vars(args)["RDPClf_Path"]
 
 #Dictionary containing command to use each training set
-classifier_dict = {"V3": "_JAVA_OPTIONS='Xmx8g';classifier.jar classify -t %s/PySCVUC/training_files/V3/rRNAClassifier.properties -o results.out cat.denoised" %install_path,}
+classifier_dict = {"V3": "java -Xmx8g -jar %sclassifier.jar classify -t %s/PySCVUC/training_files/V3/rRNAClassifier.properties -o results.out cat.denoised" %(install_path, rdp_path)}
 
 primer_pairs = vars(args)["primers"].split("-")
 amplicons = vars(args)["amplicon_names"].split("-")
