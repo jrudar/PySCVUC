@@ -70,13 +70,13 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 
 ````Example Usage: /home/data_set/results````
 
-##### --PySCVUC_Path PYSCVUC_PATH
+##### --PySCVUC_dir PYSCVUC_DIR
 
-````Optional. Default is $HOME. The path to the directory containing the PySCVUC diretory.````
+````Optional. Default is $HOME/PySCVUC/. The path to the directory containing the PySCVUC diretory.````
                         
-````Example Usage: --PySCVUC_Path /home/scripts/````
+````Example Usage: --PySCVUC_Path /home/scripts/PySCVUC````
 
-##### --RDPClf_Path RDPCLF_PATH
+##### --RDPClf_dir RDPCLF_DIR
 
 ````Required. The path to the directory containing the RDP Classifier.````
                         
