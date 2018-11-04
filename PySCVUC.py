@@ -61,8 +61,8 @@ parser.add_argument("--pe_names", help = "The file ending for paired-end reads. 
 parser.add_argument("--indices", help = "The index values in the filename which correspond to the sample name. Each index should be separated by a dash.", required = True)
 parser.add_argument("--input_dir", help = "The directory which contains the fastq.gz files.", required = True)
 parser.add_argument("--results_dir", help = "The output directory.", required = True)
-parser.add_argument("--PySCVUC_Path", help = "The path to the directory containing the PySCVUC Directory (Default: Home directory).", default = "$HOME")
-parser.add_argument("--RDPClf_Path", help = "The path to the directory containing the RDP Classifier.", required = True)
+parser.add_argument("--PySCVUC_dir", help = "The path to the directory containing the PySCVUC.py file. (Default: $HOME/PySCVUC/)", default = "$HOME/PySCVUC/")
+parser.add_argument("--RDPClf_dir", help = "The path to the directory containing the RDP Tools classifier.jar file.", required = True)
 
 #########################################################################
 "Utility Functions"
@@ -176,12 +176,19 @@ class NGSPipelineStats:
         """
         This function will create a summary of taxonomic assignments.
         """
+        self.tables["taxonomic_assignments_raw"][0].append("COI_GlobalESV")
         self.tables["taxonomic_assignments_raw"][0].append("Strand")
 
         final_table = []
         for entry in self.tables["taxonomic_assignments_raw"][1:]:
             final_entry = entry[:]
-            final_entry.append(" ")
+
+            amplicon_globalesv = final_entry[2] + "_" + final_entry[0]
+            strand = " "
+
+            final_entry.append(amplicon_globalesv)
+            final_entry.append(strand)
+
             final_table.append(final_entry)
 
         tax_df = pd.DataFrame.from_records(final_table, 
@@ -223,8 +230,6 @@ class NGSPipelineStats:
 
         writer = pd.ExcelWriter("taxonomic_assignments_raw.xlsx", 
                                 engine = "xlsxwriter")
-
-        tax_df["COI_GlobalESV"] = tax_df[["Amplicon", "GlobalESV"]].apply(lambda entry: "_".join(entry), axis = 1)
 
         tax_df = tax_df[self.final_cols]
 
@@ -563,30 +568,29 @@ class NGSPipelineStats:
 "This section contains all the main steps of the pipeline."
 #########################################################################
 print (parser.parse_args())
-
 args = parser.parse_args()
 
-install_path = vars(args)["PySCVUC_Path"]
-rdp_path = vars(args)["RDPClf_Path"]
-print (rdp_path)
+install_path = vars(args)["PySCVUC_dir"]
+if install_path[-1] != "/":
+    install_path = install_path + "/"
+
+rdp_path = vars(args)["RDPClf_dir"]
+
 #Dictionary containing command to use each training set
-classifier_dict = {"V3": "java -Xmx8g -jar %s classify -t %s/PySCVUC/training_files/V3/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
+classifier_dict = {"V3": "java -Xmx8g -jar %s classify -t %straining_files/V3/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
 
 primer_pairs = vars(args)["primers"].split("-")
 amplicons = vars(args)["amplicon_names"].split("-")
 classifier = vars(args)["classifier"]
 n_val = vars(args)["n"]
-
 n_threads = vars(args)["threads"]
-
 pe_names = vars(args)["pe_names"].split("-")
+input_dir = vars(args)["input_dir"]
+results_dir = vars(args)["results_dir"]
 
 sample_ind = {int(index) 
               for index in set(vars(args)["indices"].split("-"))}
     
-input_dir = vars(args)["input_dir"]
-results_dir = vars(args)["results_dir"]
-
 chdir(results_dir)
 
 #Create an instance of the statistics class
@@ -797,6 +801,9 @@ while True:
     command = "mv *.Rtrimmed.fasta.gz " + dir_name
     subprocess_command(command)
 
+    command = "rm -rf *.Ftrimmed.fastq.gz"
+    subprocess_command(command)
+
     chdir(dir_name)
 
     stats_class.trimmed_stats(primer_index, 
@@ -832,6 +839,9 @@ while True:
 
     with open ("cat.fasta", "w") as fa_file:
         [print (line, end = "", file = fa_file) for line in final_file]
+
+    command = "rm -rf *.Rtrimmed.fasta"
+    subprocess_command(command)
 
     command = "vsearch --threads %s --derep_fulllength cat.fasta --output cat.uniques --sizein --sizeout " %n_threads
     subprocess_command(command)
