@@ -1,9 +1,9 @@
-# PySCVUC v1.0 alpha
+# PySCVUC v1.1
 A Python3 implementation of the SCVUC amplicon sequencing pipeline which is maintained by Dr. Teresita M. Porter.
 
-Based upon the SCVUC repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link.
+Based upon the SCVUC repository by Dr. Teresita M. Porter (https://github.com/EcoBiomics-Zoobiome/SCVUC_COI_metabarcode_pipeline and https://github.com/terrimporter/SCVUS_18S_metabarcode_pipeline), PySCVUC uses the same programs, algorithms, and reference dataset outlined in the aformentioned work. The goal of this project is to unify the aformentioned pipeline under a common but modular code base. For further information, please refer to the link.
 
-This pipeline denoises and classifies COI metabarcode data produced using the Illumina MiSeq platform. It currently supports only paired end reads, however support for single end reads will be included in the future. Ultimatly, this pipeline produces a set of Exact Sequence Variants (ESVs) which are then identified down to the species rank using the RDP Classifier and the COI V3.2 Training Set (Porter & Hajibabaei, 2018 Sci Rep). This pipeline can also automatically demultiplex (the "primer" in this case needs to include the unique tag). In order to use this pipeline SeqPrep, CutAdapt, USearch 10.0.240, VSearch 2.8.2, and the RDP Tools must be installed and the location of each of the programs must be in your path. In addition, this pipeline has been tested with with Python 3.4+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
+This pipeline denoises and classifies COI and 18S metabarcode data produced using the Illumina MiSeq platform. It currently supports only paired end reads, however support for single end reads will be included in the future. Ultimatly, this pipeline produces a set of Exact Sequence Variants (ESVs) which are then identified down to the species rank using the RDP Classifier and the COI and 18S V3.2 Training Set (Porter & Hajibabaei, 2018 Sci Rep). This pipeline can also automatically demultiplex (the "primer" in this case needs to include the unique tag). In order to use this pipeline SeqPrep, CutAdapt 2.1, USearch 10.0.240, VSearch 2.8.2, and the RDP Classifier 2.12 must be installed and the location of each of the programs must be in your path. In addition, this pipeline has been tested with with Python 3.6+ and the following Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy. 
 
 ## Install:
 1) Clone this repository to your home directory.
@@ -13,7 +13,10 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 5) Ensure that you export the path to the location of the PySCVUC directory and make the script executable.
 6) Install the following Python libraries: NumPy, SciPy, Pandas, and BioPython
 7) Enter the PySCVUC directory and run ./configure.sh.
-8) The latest version of the COI Training Files should be downloaded. Extract these files to the 'PySCVUC/training_files/V3/' directory.
+8) The latest version of the COI Training Files should be downloaded. Extract these files to the 'PySCVUC/training_files/COI/' and 'PySCVUC/training_files/18S/' directories.
+
+## Example Usage: 
+python3 /home/user/PySCVUC/PySCVUC.py --primers GTCAGAGGTTCGAAGGCG-GATCCTTCCGCAGGTTCACC-AGGGCAAKYCTGGTGCCAGC-GRCGGTATCTRATCGYCTT --amplicon_names 18SEukF-18SEukR-Uni18SF-Uni18SR  --indices 1-2 --input_dir /home/user/Analysis/18S/Data --results_dir /home/user/Analysis/18S --pyscvuc_dir /home/user --rdpclf_dir /home/user/bin/RDPTools/classifier.jar --classifier 18S 
 
 ## Command Line Options: 
 ##### --primers PRIMERS
@@ -36,9 +39,9 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 
 ##### --classifier CLASSIFIER
 
-````Optional. Default is V3. The name of the training set which will be used. Currently, only the V3 COI Training Set is hard-coded. However, adding additonal training sets is very easy.````
+````Optional. Default is COI. The name of the training set which will be used. Currently, only the V3 COI Training Set is hard-coded. However, adding additonal training sets is very easy.````
 
-````Example Usage: --classifier V3````
+````Example Usage: --classifier COI````
 
 ##### --threads THREADS
 
@@ -72,7 +75,7 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 
 ##### --PySCVUC_dir PYSCVUC_DIR
 
-````Optional. Default is $HOME/PySCVUC/. The path to the directory containing the PySCVUC diretory.````
+````Reqiored. The path to the directory containing the PySCVUC diretory.````
                         
 ````Example Usage: --PySCVUC_Path /home/scripts/PySCVUC````
 
@@ -81,6 +84,12 @@ This pipeline denoises and classifies COI metabarcode data produced using the Il
 ````Required. The path to the directory containing the RDP Classifier.````
                         
 ````Example Usage: --RDPClf_Path /home/RDPTools/classifier.jar````
+
+## Updated in v1.1a:
+
+- Support For the 18S Training Set (https://github.com/terrimporter/18SClassifier)
+- Numeric Columns Output Correctly
+- Multiple Processes for SeqPrep and CutAdapt Now Created using the Python 3.6 Multiprocessing Module
 
 ## Future Work:
 
