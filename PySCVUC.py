@@ -55,20 +55,89 @@ parser = argparse.ArgumentParser(description = "Denoising and classification pip
 parser.add_argument("--primers", help = "The primer sequences which will be trimmed by CutAdapt. Each sequences should be separated by a dash.", required = True)
 parser.add_argument("--amplicon_names", help = "The name of each amplicon. Each name should be separated by a dash.", required = True)
 parser.add_argument("--n", help = "The stringency setting for CutAdapt. (Default: 3)", default = "3")
-parser.add_argument("--classifier", help = "The name of the training set to use. (Default: V3)", default = "V3")
+parser.add_argument("--classifier", help = "The name of the training set to use. (Default: COI)", default = "COI")
 parser.add_argument("--threads", help = "The number of threads to spawn. (Default: 10)", default = "10")
 parser.add_argument("--pe_names", help = "The file ending for paired-end reads. Should be separated by a dash. Example: L001_R1_001 and L001_R2_001. (Default: L001_R1_001-L001_R2_001)", default = "L001_R1_001-L001_R2_001")
 parser.add_argument("--indices", help = "The index values in the filename which correspond to the sample name. Each index should be separated by a dash.", required = True)
 parser.add_argument("--input_dir", help = "The directory which contains the fastq.gz files.", required = True)
 parser.add_argument("--results_dir", help = "The output directory.", required = True)
-parser.add_argument("--PySCVUC_dir", help = "The path to the directory containing the PySCVUC.py file. (Default: $HOME/PySCVUC/)", default = "$HOME/PySCVUC/")
-parser.add_argument("--RDPClf_dir", help = "The path to the directory containing the RDP Tools classifier.jar file.", required = True)
+parser.add_argument("--pyscvuc_dir", help = "The location of the PySCVUC directory.", required = True)
+parser.add_argument("--rdpclf_dir", help = "The full path to the RDP Classifier's '.jar' file.", required = True)
+
+#########################################################################
+"Variables and Dictionaries"
+#########################################################################
+
+tax_assignment_headers = {"column_headers_v3":  ["GlobalESV", 
+                                                 "SampleName", 
+                                                 "Amplicon", 
+                                                 "ESVsize",
+                                                 "Root",
+                                                 "RootRank",
+                                                 "rBP",
+                                                 "SuperKingdom", 
+                                                 "SuperKingdomRank", 
+                                                 "skBP", 
+                                                 "Kingdom", 
+                                                 "KingdomRank", 
+                                                 "kBP", 
+                                                 "Phylum", 
+                                                 "PhylumRank", 
+                                                 "pBP", 
+                                                 "Class", 
+                                                 "ClassRank", 
+                                                 "cBP",
+                                                 "Order", 
+                                                 "OrderRank", 
+                                                 "oBP", 
+                                                 "Family", 
+                                                 "FamilyRank", 
+                                                 "fBP", 
+                                                 "Genus", 
+                                                 "GenusRank", 
+                                                 "gBP", 
+                                                 "Species", 
+                                                 "SpeciesRank", 
+                                                 "sBP"],
+
+                          "column_headers_18":  ["GlobalESV", 
+                                                 "SampleName", 
+                                                 "Amplicon", 
+                                                 "ESVsize",
+                                                 "Root",
+                                                 "RootRank",
+                                                 "rBP",
+                                                 "SuperKingdom", 
+                                                 "SuperKingdomRank", 
+                                                 "skBP", 
+                                                 "Kingdom", 
+                                                 "KingdomRank", 
+                                                 "kBP", 
+                                                 "Phylum", 
+                                                 "PhylumRank", 
+                                                 "pBP", 
+                                                 "Class", 
+                                                 "ClassRank", 
+                                                 "cBP",
+                                                 "Order", 
+                                                 "OrderRank", 
+                                                 "oBP", 
+                                                 "Family", 
+                                                 "FamilyRank", 
+                                                 "fBP", 
+                                                 "Genus", 
+                                                 "GenusRank", 
+                                                 "gBP", 
+                                                 "Species", 
+                                                 "SpeciesRank", 
+                                                 "sBP"]
+                          }
 
 #########################################################################
 "Utility Functions"
 #########################################################################
 def change_inosine(primer):
-    
+
     new_primer = "".join([x if x != "I" else "D" for x in primer])
 
     return new_primer
@@ -156,6 +225,79 @@ class NGSPipelineStats:
     This class calculates the statistics for each sample or the 
     concatenated and/or denoised data.
     """
+    def calculate_raw_stats(self, files):
+
+        workers = Pool(int(self.n_threads))
+        raw_results = workers.map(self.raw_stats, 
+                                  files) 
+        workers.close()
+        workers.join()
+
+        raw_results.sort()
+
+        #Populate the hash table with the results for each sample
+        temp_table = {}
+        for result in raw_results:
+            if result[0] not in temp_table:
+                temp_table[result[0]] = list()
+
+            temp_table[result[0]].append(result[0:-1])
+
+        r1_reads = 0
+        r2_reads = 0
+        for entry, result in temp_table.items():
+            temp_list = None
+            print (entry, ":", result[0], "/", result[1])
+
+            if result[0][1] == "R1":
+                temp_list = result[0][:]
+                temp_list.extend(result[1][:])
+                r1_reads += int(result[0][2])
+                r2_reads += int(result[1][2])
+            else:
+                temp_list = result[1][:]
+                temp_list.extend(result[0][:])
+                r1_reads += int(result[1][2])
+                r2_reads += int(result[0][2])
+
+            self.tables["raw_stats_table"].append(temp_list)
+
+        print (' ')
+        
+        number_of_sites = len(self.tables["raw_stats_table"]) - 1
+        self.summary_dict["Number of Samples"] = number_of_sites
+        self.summary_dict["Total Number of Reads (R1)"] = r1_reads
+        self.summary_dict["Total Number of Reads (R2)"] = r2_reads
+        self.summary_dict["Read Coverage"] = int(r1_reads / number_of_sites)
+
+    def calculate_paired_stats(self, files):
+        workers = Pool(int(self.n_threads))
+        paired_results = workers.map(self.raw_stats, 
+                                     files)
+        workers.close()
+        workers.join()
+
+        paired_results.sort()
+
+        reads_paired = 0
+        for entry in paired_results:
+            reads_paired += int(entry[2])
+            final_entry = [entry[0]]
+            final_entry.extend(entry[2:-1])
+            self.tables["paired_stats_table"].append(final_entry)
+
+        self.summary_dict["Total Paired Reads"] = reads_paired
+
+        paired_percentage = (reads_paired / self.summary_dict["Total Number of Reads (R1)"]) * 100
+        paired_percentage = str(paired_percentage)
+
+        len_perc = len(paired_percentage)
+
+        if len_perc > 3:
+            self.summary_dict["Percentage Paired"] = paired_percentage[0:4] + '%'
+        else:
+            self.summary_dict["Percentage Paired"] = paired_percentage + '%'
+
     def prep_detailed_stats(self):
         "Writes out the detailed per-file statistics."
 
@@ -176,25 +318,18 @@ class NGSPipelineStats:
         """
         This function will create a summary of taxonomic assignments.
         """
-        self.tables["taxonomic_assignments_raw"][0].append("COI_GlobalESV")
         self.tables["taxonomic_assignments_raw"][0].append("Strand")
 
         final_table = []
         for entry in self.tables["taxonomic_assignments_raw"][1:]:
             final_entry = entry[:]
-
-            amplicon_globalesv = final_entry[2] + "_" + final_entry[0]
-            strand = " "
-
-            final_entry.append(amplicon_globalesv)
-            final_entry.append(strand)
-
+            final_entry.append(" ")
             final_table.append(final_entry)
 
         tax_df = pd.DataFrame.from_records(final_table, 
                                            columns = self.tables["taxonomic_assignments_raw"][0])
 
-        if self.trained_clf == "V3":
+        if self.trained_clf == "COI":
             cutoff_table = [
                    ["Rank", "500+bp", "400bp", "200bp", "100bp", "50bp"],
                    ["Superkingdom", "0", "0", "0", "0", "0"],
@@ -211,18 +346,61 @@ class NGSPipelineStats:
                    ["Prescribed Cutoffs for the RDP Classifier 2.12 with the COIv3.2 Training Set and BR5 Amplicons."]
                    ]
 
-            tax_df[["ESVsize", 
-                    "skBP", 
+            tax_df[["ESVsize",
+                    "rBP",
+                    "skBP",
+                    "kBP",
                     "pBP", 
                     "cBP", 
                     "oBP", 
                     "fBP", 
-                    "sBP"]] = tax_df[["ESVsize", 
-                                      "skBP", 
+                    "gBP",
+                    "sBP"]] = tax_df[["ESVsize",
+                                      "rBP",
+                                      "skBP",
+                                      "kBP", 
                                       "pBP", 
                                       "cBP", 
                                       "oBP", 
-                                      "fBP", 
+                                      "fBP",
+                                      "gBP", 
+                                      "sBP"]].apply(pd.to_numeric)
+
+        if self.trained_clf == "18S":
+            cutoff_table = [
+                   ["Rank", "Full", "600bp", "400bp", "200bp", "100bp", "50bp"],
+                   ["Superkingdom", "0", "0", "0", "0", "0", "0"],
+                   ["Kingdom", "0", "0", "0", "0", "0", "70"],
+                   ["Phylum", "0", "0", "0", "0", "10", "NA"],
+                   ["Class", "0", "0", "0", "0", "40", "NA"],
+                   ["Order", "0", "30", "40", "60", "NA", "NA"],
+                   ["Family", "50", "50", "60", "80", "NA", "NA"],
+                   ["Genus", "90", "50", "60", "80", "NA", "NA"],
+                   ["Species", "NA", "NA", "NA", "NA", "NA"],
+                   [" "],
+                   ["NA = No cutoff available will result in 95% correct assignments"],
+                   ["Minimum Bootstrap Support Cutoff (Species Rank Classifier) (%)"],
+                   ["Prescribed Cutoffs for the RDP Classifier 2.12 with the 18Sv3.2 Training Set."]
+                   ]
+
+            tax_df[["ESVsize",
+                    "rBP",
+                    "skBP",
+                    "kBP",
+                    "pBP", 
+                    "cBP", 
+                    "oBP", 
+                    "fBP", 
+                    "gBP",
+                    "sBP"]] = tax_df[["ESVsize",
+                                      "rBP",
+                                      "skBP",
+                                      "kBP", 
+                                      "pBP", 
+                                      "cBP", 
+                                      "oBP", 
+                                      "fBP",
+                                      "gBP", 
                                       "sBP"]].apply(pd.to_numeric)
 
         cutoff_table_df = pd.DataFrame.from_records(cutoff_table[1:], 
@@ -230,6 +408,8 @@ class NGSPipelineStats:
 
         writer = pd.ExcelWriter("taxonomic_assignments_raw.xlsx", 
                                 engine = "xlsxwriter")
+
+        tax_df["COI_GlobalESV"] = tax_df[["Amplicon", "GlobalESV"]].apply(lambda entry: "_".join(entry), axis = 1)
 
         tax_df = tax_df[self.final_cols]
 
@@ -301,7 +481,7 @@ class NGSPipelineStats:
 
             self.tables["taxonomic_assignments_raw"].extend(final_data)
 
-    def uni_stats(self, fa_file, denoised = False):
+    def uni_stats(self, fa_file, amplicon, denoised = False):
         """
         This function calculates the statistics on unique and denoised file.
         This function also creates a file in which multi-line sequences are stored as one line.
@@ -339,14 +519,24 @@ class NGSPipelineStats:
         num_seqs = len(fa_data)
         stats = self.stat_math(np.asarray(fa_data, dtype = np.int))
         
-        return [sample_key, 
-                num_seqs, 
-                stats[0], 
-                stats[1], 
-                stats[2], 
-                stats[3], 
-                stats[4], 
-                counts]
+        table_entry =  [amplicon,
+                        sample_key, 
+                        num_seqs, 
+                        stats[0], 
+                        stats[1], 
+                        stats[2], 
+                        stats[3], 
+                        stats[4], 
+                        counts]
+
+        if denoised == False:
+            self.tables["unique_stats_table"].append(table_entry)
+            self.summary_dict["Unique Sequences for %s" %amplicon] = table_entry[2]
+            self.summary_dict["Unique Reads for %s" %amplicon] = table_entry[8]
+
+        else:
+            self.tables["denoised_stats_table"].append(table_entry)
+            self.summary_dict["Denoised Sequences for %s" %amplicon] = table_entry[2]
 
     def trimmed_stats(self, index, amp_index, stage):
         "This function calculates statistics on trimmed and denoised data."
@@ -383,8 +573,7 @@ class NGSPipelineStats:
         self.summary_dict[summary_key] = num_reads
         
         summary_key = "% Reads Trimmed (" + amp_index + ")" 
-
-        self.summary_dict[summary_key] = num_reads / self.summary_dict["Total Paired Reads"]
+        self.summary_dict[summary_key] = str((num_reads / self.summary_dict["Total Paired Reads"]) * 100)[0:4] + "%"
 
     def raw_stats(self, fa_file, trim2 = False):
         "This function calculates the raw and paired statistics."
@@ -472,48 +661,24 @@ class NGSPipelineStats:
 
         return min_len, max_len, mean_len, median_len, mode_len 
 
-    def __init__(self, samp_ind, clf_type):
+    def __init__(self, samp_ind, clf_type, n_threads):
         #Set the indices which will determine the sample names
         self.indices = samp_ind
+
         self.trained_clf = clf_type
+        
+        self.n_threads = n_threads
 
         #Setup hash to hold results for calculating summary stats
         self.summary_dict = {}
 
-        if clf_type == "V3":
-            self.column_headers = ["GlobalESV", 
-                                   "SampleName", 
-                                   "Amplicon", 
-                                   "ESVsize",
-                                   "Root",
-                                   "RootRank",
-                                   "rBP",
-                                   "SuperKingdom", 
-                                   "SuperKingdomRank", 
-                                   "skBP", 
-                                   "Kingdom", 
-                                   "KingdomRank", 
-                                   "kBP", 
-                                   "Phylum", 
-                                   "PhylumRank", 
-                                   "pBP", 
-                                   "Class", 
-                                   "ClassRank", 
-                                   "cBP",
-                                   "Order", 
-                                   "OrderRank", 
-                                   "oBP", 
-                                   "Family", 
-                                   "FamilyRank", 
-                                   "fBP", 
-                                   "Genus", 
-                                   "GenusRank", 
-                                   "gBP", 
-                                   "Species", 
-                                   "SpeciesRank", 
-                                   "sBP"]
+        if clf_type == "COI":
+            self.column_headers = tax_assignment_headers["column_headers_v3"]
 
-        self.final_cols = ["COI_GlobalESV", "SampleName", "ESVsize", "Strand"]
+        if clf_type == "18S":
+            self.column_headers = tax_assignment_headers["column_headers_18"]
+
+        self.final_cols = ["GlobalESV", "SampleName", "ESVsize", "Strand"]
         self.final_cols.extend(self.column_headers[4:])
 
         #Hash to hold the tables produced by the analysis
@@ -543,7 +708,8 @@ class NGSPipelineStats:
                                                "MedianLen", 
                                                "ModeLen"]],
 
-                       "unique_stats_table": [["Sample", 
+                       "unique_stats_table": [["Primer",
+                                               "Sample", 
                                                "NumOTUs", 
                                                "MinLen", 
                                                "MaxLen",
@@ -552,7 +718,8 @@ class NGSPipelineStats:
                                                "ModeLen", 
                                                "Counts"]],
 
-                       "denoised_stats_table": [["Sample", 
+                       "denoised_stats_table": [["Primer",
+                                                 "Sample", 
                                                  "NumOTUs", 
                                                  "MinLen", 
                                                  "MaxLen",
@@ -567,376 +734,303 @@ class NGSPipelineStats:
 #########################################################################
 "This section contains all the main steps of the pipeline."
 #########################################################################
-print (parser.parse_args())
-args = parser.parse_args()
+if __name__ == "__main__":
 
-install_path = vars(args)["PySCVUC_dir"]
-if install_path[-1] != "/":
-    install_path = install_path + "/"
+    print (parser.parse_args())
+    args = parser.parse_args()
 
-rdp_path = vars(args)["RDPClf_dir"]
+    install_path = vars(args)["pyscvuc_dir"]
+    rdp_path = vars(args)["rdpclf_dir"]
 
-#Dictionary containing command to use each training set
-classifier_dict = {"V3": "java -Xmx8g -jar %s classify -t %straining_files/V3/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
+    if install_path[-1] != "/": 
+        install_path = install_path + "/"
 
-primer_pairs = vars(args)["primers"].split("-")
-amplicons = vars(args)["amplicon_names"].split("-")
-classifier = vars(args)["classifier"]
-n_val = vars(args)["n"]
-n_threads = vars(args)["threads"]
-pe_names = vars(args)["pe_names"].split("-")
-input_dir = vars(args)["input_dir"]
-results_dir = vars(args)["results_dir"]
+    #Dictionary containing command to use each training set
+    classifier_dict = {"COI": "java -Xmx8g -jar %s classify -t %sPySCVUC/training_files/COI/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path),
+                       "18S": "java -Xmx8g -jar %s classify -t %sPySCVUC/training_files/18Sv32/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
 
-sample_ind = {int(index) 
-              for index in set(vars(args)["indices"].split("-"))}
+    primer_pairs = vars(args)["primers"].split("-")
+    amplicons = vars(args)["amplicon_names"].split("-")
+    classifier = vars(args)["classifier"]
+    n_val = vars(args)["n"]
+    n_threads = vars(args)["threads"]
+    pe_names = vars(args)["pe_names"].split("-")
+    input_dir = vars(args)["input_dir"]
+    results_dir = vars(args)["results_dir"]
+
+    sample_ind = {int(index) 
+                  for index in set(vars(args)["indices"].split("-"))}
     
-chdir(results_dir)
+    chdir(results_dir)
 
-#Create an instance of the statistics class
-stats_class = NGSPipelineStats(sample_ind, 
-                               classifier)
+    #Create an instance of the statistics class
+    stats_class = NGSPipelineStats(sample_ind, 
+                                   classifier,
+                                   n_threads)
 
-#Make the directories and copy files
-if not exists("final"): makedirs("final")
-chdir("final")
-final_path = getcwd()
-chdir("..")
+    #Make the directories and copy files
+    if not exists("final"): makedirs("final")
+    chdir("final")
+    final_path = getcwd()
+    chdir("..")
 
-if not exists("raw"): makedirs("raw")
+    if not exists("raw"): makedirs("raw")
 
-command = "cp %s/*.* raw/" %input_dir
-subprocess_command(command)
-
-try:
-    command = "unzip raw/*.zip -d raw/"
+    command = "cp %s/*.* raw/" %input_dir
     subprocess_command(command)
 
-    command = "rm -f raw/*.zip"
-    subprocess_command(command)
+    try:
+        command = "unzip raw/*.zip -d raw/"
+        subprocess_command(command)
 
-except:
-    pass
+        command = "rm -f raw/*.zip"
+        subprocess_command(command)
 
-chdir("raw")
+    except:
+        pass
 
-#########################################################################
-"Calculate Raw Statistics"
-#########################################################################
-print (' ')
+    chdir("raw")
 
-dir_files = get_fnames("fastq.gz")
-workers = Pool(int(n_threads))
-raw_results = workers.map(stats_class.raw_stats, dir_files) 
-workers.close()
-workers.join()
-
-#Populate the hash table with the results for each sample
-temp_table = {}
-for result in raw_results:
-    if result[0] not in temp_table:
-        temp_table[result[0]] = list()
-
-    temp_table[result[0]].append(result[0:-1])
-
-r1_reads = 0
-r2_reads = 0
-for entry, result in temp_table.items():
-    temp_list = None
-    print (entry, result)
-    if result[0][1] == "R1":
-        temp_list = result[0][:]
-        temp_list.extend(result[1][:])
-        r1_reads += int(result[0][2])
-        r2_reads += int(result[1][2])
-    else:
-        temp_list = result[1][:]
-        temp_list.extend(result[0][:])
-        r1_reads += int(result[1][2])
-        r2_reads += int(result[0][2])
-
-    stats_class.tables["raw_stats_table"].append(temp_list)
-
-print (' ')
-        
-number_of_sites = len(stats_class.tables["raw_stats_table"]) - 1
-stats_class.summary_dict["Number of Samples"] = number_of_sites
-stats_class.summary_dict["Total Number of Reads (R1)"] = r1_reads
-stats_class.summary_dict["Total Number of Reads (R2)"] = r2_reads
-stats_class.summary_dict["Read Coverage"] = int(r1_reads / number_of_sites)
-
-temp_table.clear()
-
-#########################################################################
-"Pair Reads and Calculate Paired Statistics"
-#########################################################################
-#Pair the reads and calculate the paired statistics
-dir_files =  get_fnames("fastq.gz")
-
-raw_file_hash = {}
-for entry in dir_files:
-    file_name = entry.split(".")[0]
-
-    new_fname = file_name.replace(pe_names[0], '').replace(pe_names[1], '')
-
-    if new_fname not in raw_file_hash:
-        raw_file_hash[new_fname] = list()
-
-    raw_file_hash[new_fname].append(entry)
-
-print (" ")
-print ("Getting ready to pair reads...")
-for key, value in raw_file_hash.items():
-    value.sort()
-
-    print (key, value)
-
-print (" ")
-
-seq_commands = []
-for key, value in raw_file_hash.items():
-    file_1 = value[0]
-    file_2 = value[1]
-
-    seq_command = 'seqprep -f %s -r %s -1 %s.out -2 %s.out -q 20 -s %s.paired.fastq.gz -o 25' %(file_1, file_2, file_1, file_2, key)
-    seq_commands.append(seq_command)
-
-workers = Pool(int(n_threads))
-workers.map(subprocess_command, seq_commands)
-workers.close()
-workers.join()
-
-if not exists("paired"): makedirs("paired")
-command = "rm -f *.out;mv *.paired.fastq.gz paired;rm -f *.fastq.gz"
-subprocess_command(command)
-chdir("paired")
-
-dir_files =  get_fnames("fastq.gz")
-workers = Pool(int(n_threads))
-paired_results = workers.map(stats_class.raw_stats, dir_files)
-workers.close()
-workers.join()
-
-reads_paired = 0
-for entry in paired_results:
-    reads_paired += int(entry[2])
-    final_entry = [entry[0]]
-    final_entry.extend(entry[2:-1])
-    stats_class.tables["paired_stats_table"].append(final_entry)
-
-stats_class.summary_dict["Total Paired Reads"] = reads_paired
-
-paired_percentage = (reads_paired / stats_class.summary_dict["Total Number of Reads (R1)"]) * 100
-paired_percentage = str(paired_percentage)
-
-len_perc = len(paired_percentage)
-
-if len_perc > 3:
-    stats_class.summary_dict["Percentage Paired"] = paired_percentage[0:4] + '%'
-else:
-    stats_class.summary_dict["Percentage Paired"] = paired_percentage + '%'
-
-#########################################################################
-"""
-Loop through each amplicon and do the following:
-    1) Run Cutadapt
-    2) Dereplicate and Denoise (Vsearch/Usearch)
-    3) Create OTU Table (Vsearch)
-    4) Classify (RDP Classifier) and Add Abundance Information
-"""
-#########################################################################
-num_primers = len(primer_pairs)
-primer_index = 0
-while True:
     #########################################################################
-    "Trim with Cutadapt"
+    "Calculate Raw Statistics"
     #########################################################################
-    dir_name = amplicons[primer_index] + "_Trimmed"
-    if not exists(dir_name): makedirs(dir_name)
-
     print (' ')
-    print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
 
-    new_primer = change_inosine(primer_pairs[primer_index])
+    stats_class.calculate_raw_stats(get_fnames("fastq.gz"))
 
-    dir_files =  get_fnames("paired.fastq.gz")
-    cut_commands = []
-    for file_name in dir_files:
-        cut_commands.append("cutadapt -g %s -m 150 -q 20,20 --max-n=%s --discard-untrimmed %s -o %s.Ftrimmed.fastq.gz" %(new_primer, str(n_val), file_name, file_name))
+    #########################################################################
+    "Pair Reads and Calculate Paired Statistics"
+    #########################################################################
+    #Pair the reads and calculate the paired statistics
+    dir_files =  get_fnames("fastq.gz")
+
+    raw_file_hash = {}
+    for entry in dir_files:
+        file_name = entry.split(".")[0]
+
+        new_fname = file_name.replace(pe_names[0], '').replace(pe_names[1], '')
+
+        if new_fname not in raw_file_hash:
+            raw_file_hash[new_fname] = list()
+
+        raw_file_hash[new_fname].append(entry)
+
+    print (" ")
+
+    seq_commands = []
+    for key, value in raw_file_hash.items():
+        files = [value[0], value[1]]
+        files.sort()
+
+        file_1, file_2 = files
+
+        seq_command = 'seqprep -f %s -r %s -1 %s.out -2 %s.out -q 20 -s %s.paired.fastq.gz -o 25' %(file_1, file_2, file_1, file_2, key)
+        seq_commands.append(seq_command)
 
     workers = Pool(int(n_threads))
-    workers.map(subprocess_command, cut_commands)
+    workers.map(subprocess_command, seq_commands)
     workers.close()
     workers.join()
 
-    stats_class.trimmed_stats(primer_index, 
-                              amplicons[primer_index], 
-                              "trim1")
-    
-    command = "mv *.Ftrimmed.fastq.gz " + dir_name
+    if not exists("paired"): makedirs("paired")
+    command = "rm -f *.out;mv *.paired.fastq.gz paired;rm -f *.fastq.gz"
     subprocess_command(command)
-
-    chdir(dir_name)
-    
-    #Trim reverse primers if the sequences are paired
-    primer_index += 1
-    print (' ')
-    print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
-    
-    new_primer = reverse_complement(primer_pairs[primer_index])
-
-    dir_name = amplicons[primer_index] + "_Trimmed"
-    if not exists(dir_name): makedirs(dir_name)
-     
-    dir_files =  get_fnames("Ftrimmed.fastq.gz")
-    cut_commands = []
-    for file_name in dir_files:
-        cut_commands.append("cutadapt -a %s -m 150 -q 20,20 --max-n=%s  --discard-untrimmed %s -o %s.Rtrimmed.fasta.gz" %(new_primer, str(n_val), file_name, file_name))
-
-    workers = Pool(int(n_threads))
-    workers.map(subprocess_command, cut_commands)
-    workers.close()
-    workers.join()
-
-    command = "mv *.Rtrimmed.fasta.gz " + dir_name
-    subprocess_command(command)
-
-    command = "rm -rf *.Ftrimmed.fastq.gz"
-    subprocess_command(command)
-
-    chdir(dir_name)
-
-    stats_class.trimmed_stats(primer_index, 
-                              amplicons[primer_index], 
-                              "trim2")
-
-    print("\nCurrent Statistical Summary After Trimming Reads: ")
-    for key, value in stats_class.summary_dict.items():
-        print (key, value)
-    print("\n")
-
-    current_dir = getcwd()
-    chdir("..")
-    chdir("..")
-    chdir("..")
-
-    linked_dir_name = "QCdFastas-" + amplicons[primer_index]
-    command = "ln -s " + current_dir + " " + linked_dir_name
-    subprocess_command(command)
-
-    chdir(linked_dir_name)
-
-    #########################################################################
-    "Dereplicate and Denoise"
-    #########################################################################
-    command = "ls | grep .gz | parallel -j %s gunzip {}" %n_threads
-    subprocess_command(command)
-
-    dir_files =  get_fnames("fasta")
-    fixed_files = [fix_headers(file) for file in dir_files]
-
-    final_file = [line for file in fixed_files for line in file]
-
-    with open ("cat.fasta", "w") as fa_file:
-        [print (line, end = "", file = fa_file) for line in final_file]
-
-    command = "rm -rf *.Rtrimmed.fasta"
-    subprocess_command(command)
-
-    command = "vsearch --threads %s --derep_fulllength cat.fasta --output cat.uniques --sizein --sizeout " %n_threads
-    subprocess_command(command)
-
-    if not exists("global_uniques"): makedirs("global_uniques")
-    command = "mv cat.uniques global_uniques"
-    subprocess_command(command)
-    chdir("global_uniques")
-
-    unique_results = stats_class.uni_stats("cat.uniques")
-
-    stats_class.tables["unique_stats_table"].append(unique_results)
-    stats_class.summary_dict["Unique Sequences" + amplicons[primer_index - 1]] = unique_results[1]
-
-    command = "usearch10 -unoise3 cat.uniques -zotus cat.original.denoised -minsize 3"
-    subprocess_command(command)
-
-    if not exists("global_denoised"): makedirs("global_denoised")
-    command = "mv cat.original.denoised global_denoised"
-    subprocess_command(command)
-    chdir ("global_denoised")
-
-    denoised_results = stats_class.uni_stats("cat.original.denoised", True)
-    stats_class.tables["denoised_stats_table"].append(unique_results)
-    stats_class.summary_dict["Denoised Sequences" + amplicons[primer_index - 1]] = denoised_results[1]
-
-    print("\nCurrent Statistical Summary After Denoising: ")
-    for key, value in stats_class.summary_dict.items():
-        print (key, value)
-    print("\n")
-
-    fix_zotu("cat.original.denoised")
-
-    chdir("..")
-    chdir("..")
-
-    #########################################################################
-    "Create OTU Table and Classify"
-    #########################################################################
-    command = "vsearch --usearch_global cat.fasta --db global_uniques/global_denoised/cat.mod.denoised --id 1.0 --otutabout cat.fasta.table --threads %s" %n_threads
-    subprocess_command(command)
-
-    if not exists("global_OTU_table"): makedirs("global_OTU_table")
-    command = "mv *.table global_OTU_table/"
-    subprocess_command(command)
-
-    chdir("global_uniques")
-    chdir("global_denoised")
-
-    command = "mv cat.original.denoised cat.original.denoised.bak;mv cat.mod.denoised cat.denoised"
-    subprocess_command(command)
-
-    command = classifier_dict[classifier]
-    subprocess_command(command)
-
-    if not exists("clf_results"): makedirs("clf_results")
-    command = "mv results.out clf_results/"
-    subprocess_command(command)
-    chdir("clf_results")
-
-    command = "cp ../../../global_OTU_table/cat.fasta.table ."
-    subprocess_command(command)
-
-    stats_class.add_abundance(amplicons[primer_index-1], 
-                              sample_ind)
-
-    chdir("..")
-    chdir("..")
-    chdir("..")
-    chdir("..")
-    chdir("..")
-    chdir("..")
-
-    primer_index += 1
-    if primer_index >= num_primers: break
-
     chdir("paired")
 
-chdir("..")
-chdir("final")
+    stats_class.calculate_paired_stats(get_fnames("paired.fastq.gz"))
+
+    #########################################################################
+    """
+    Loop through each amplicon and do the following:
+        1) Run Cutadapt
+        2) Dereplicate and Denoise (Vsearch/Usearch)
+        3) Create OTU Table (Vsearch)
+        4) Classify (RDP Classifier) and Add Abundance Information
+    """
+    #########################################################################
+    num_primers = len(primer_pairs)
+    primer_index = 0
+    while True:
+        #########################################################################
+        "Trim with Cutadapt"
+        #########################################################################
+        dir_name = amplicons[primer_index] + "_Trimmed"
+        if not exists(dir_name): makedirs(dir_name)
+
+        print (' ')
+        print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
+
+        new_primer = change_inosine(primer_pairs[primer_index])
+
+        dir_files =  get_fnames("paired.fastq.gz")
+        cut_commands = []
+        for file_name in dir_files:
+            cut_commands.append("cutadapt -g %s -m 150 -q 20,20 --max-n=%s --discard-untrimmed %s -o %s.Ftrimmed.fastq.gz" %(new_primer, str(n_val), file_name, file_name))
+
+        workers = Pool(int(n_threads))
+        workers.map(subprocess_command, cut_commands)
+        workers.close()
+        workers.join()
+
+        command = "mv *.Ftrimmed.fastq.gz " + dir_name
+        subprocess_command(command)
+        chdir(dir_name)
+
+        stats_class.trimmed_stats(primer_index, 
+                                  amplicons[primer_index], 
+                                  "trim1")
+        
+        #Trim reverse primers if the sequences are paired
+        primer_index += 1
+        print (' ')
+        print ("Trimming %s from sequences with Cutadapt... " %primer_pairs[primer_index])
+    
+        new_primer = reverse_complement(primer_pairs[primer_index])
+        print("The reverse complemented primer is: %s" %new_primer)
+
+        dir_name = amplicons[primer_index] + "_Trimmed"
+        if not exists(dir_name): makedirs(dir_name)
+     
+        dir_files =  get_fnames("Ftrimmed.fastq.gz")
+        cut_commands = []
+        for file_name in dir_files:
+            cut_commands.append("cutadapt -a %s -m 150 -q 20,20 --max-n=%s  --discard-untrimmed %s -o %s.Rtrimmed.fasta" %(new_primer, str(n_val), file_name, file_name))
+
+        workers = Pool(int(n_threads))
+        workers.map(subprocess_command, cut_commands)
+        workers.close()
+        workers.join()
+
+        command = "mv *.Rtrimmed.fasta " + dir_name
+        subprocess_command(command)
+
+        chdir(dir_name)
+
+        stats_class.trimmed_stats(primer_index, 
+                                  amplicons[primer_index], 
+                                  "trim2")
+
+        print("\nCurrent Statistical Summary After Trimming Reads: ")
+        for key, value in stats_class.summary_dict.items():
+            print (key, value)
+        print("\n")
+
+        current_dir = getcwd()
+        chdir("..")
+        chdir("..")
+        chdir("..")
+
+        linked_dir_name = "QCdFastas-" + amplicons[primer_index]
+        command = "ln -s " + current_dir + " " + linked_dir_name
+        subprocess_command(command)
+
+        chdir(linked_dir_name)
+
+        #########################################################################
+        "Dereplicate and Denoise"
+        #########################################################################
+        dir_files =  get_fnames("fasta")
+        fixed_files = [fix_headers(file) for file in dir_files]
+
+        final_file = [line for file in fixed_files for line in file]
+
+        with open ("cat.fasta", "w") as fa_file:
+            [print (line, end = "", file = fa_file) for line in final_file]
+
+        if not exists("fasta"): makedirs("fasta")
+
+        command = "mv *.Rtrimmed.fasta fasta/"
+        subprocess_command(command)
+
+        command = "vsearch --threads %s --derep_fulllength cat.fasta --output cat.uniques --sizein --sizeout " %n_threads
+        subprocess_command(command)
+
+        if not exists("global_uniques"): makedirs("global_uniques")
+        command = "mv cat.uniques global_uniques"
+        subprocess_command(command)
+        chdir("global_uniques")
+
+        stats_class.uni_stats("cat.uniques", amplicons[primer_index - 1])
+
+        command = "usearch10 -unoise3 cat.uniques -zotus cat.original.denoised -minsize 3"
+        subprocess_command(command)
+
+        if not exists("global_denoised"): makedirs("global_denoised")
+        command = "mv cat.original.denoised global_denoised"
+        subprocess_command(command)
+        chdir ("global_denoised")
+
+        stats_class.uni_stats("cat.original.denoised", amplicons[primer_index - 1], True)
+
+        print("\nCurrent Statistical Summary After Denoising: ")
+        for key, value in stats_class.summary_dict.items():
+            print (key, value)
+        print("\n")
+
+        fix_zotu("cat.original.denoised")
+
+        chdir("..")
+        chdir("..")
+
+        #########################################################################
+        "Create OTU Table and Classify"
+        #########################################################################
+        command = "vsearch --usearch_global cat.fasta --db global_uniques/global_denoised/cat.mod.denoised --id 1.0 --otutabout cat.fasta.table --threads %s" %n_threads
+        subprocess_command(command)
+
+        if not exists("global_OTU_table"): makedirs("global_OTU_table")
+        command = "mv *.table global_OTU_table/"
+        subprocess_command(command)
+
+        chdir("global_uniques")
+        chdir("global_denoised")
+
+        command = "mv cat.original.denoised cat.original.denoised.bak;mv cat.mod.denoised cat.denoised"
+        subprocess_command(command)
+
+        command = classifier_dict[classifier]
+        subprocess_command(command)
+
+        if not exists("clf_results"): makedirs("clf_results")
+        command = "mv results.out clf_results/"
+        subprocess_command(command)
+        chdir("clf_results")
+
+        command = "cp ../../../global_OTU_table/cat.fasta.table ."
+        subprocess_command(command)
+
+        stats_class.add_abundance(amplicons[primer_index-1], 
+                                  sample_ind)
+
+        chdir("..")
+        chdir("..")
+        chdir("..")
+        chdir("..")
+        chdir("..")
+        chdir("..")
+
+        primer_index += 1
+        if primer_index >= num_primers: break
+
+        chdir("paired")
+
+    chdir("..")
+    chdir("final")
 
 
-#########################################################################
-"""
-1) Prepare Taxonomic Summary Table (XLSX)
-2) Prepare full statistics (XLSX)
-"""
-#########################################################################
-stats_class.prep_otu_summary()
-stats_class.prep_detailed_stats()
+    #########################################################################
+    """
+    1) Prepare Taxonomic Summary Table (XLSX)
+    2) Prepare full statistics (XLSX)
+    """
+    #########################################################################
+    stats_class.prep_otu_summary()
+    stats_class.prep_detailed_stats()
 
-if not exists("Assignments"): makedirs("Assignments")
-command = "mv *_assignments_raw.xlsx Assignments"
-subprocess_command(command)
+    if not exists("Assignments"): makedirs("Assignments")
+    command = "mv *_assignments_raw.xlsx Assignments"
+    subprocess_command(command)
 
-if not exists("Statistics"): makedirs("Statistics")
-command = "mv *_statistics.xlsx Statistics"
-subprocess_command(command)
+    if not exists("Statistics"): makedirs("Statistics")
+    command = "mv *_statistics.xlsx Statistics"
+    subprocess_command(command)
