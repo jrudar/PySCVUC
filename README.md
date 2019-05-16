@@ -75,7 +75,7 @@ python3 /home/user/PySCVUC/PySCVUC.py --primers GTCAGAGGTTCGAAGGCG-GATCCTTCCGCAG
 
 ##### --PySCVUC_dir PYSCVUC_DIR
 
-````Reqiored. The path to the directory containing the PySCVUC diretory.````
+````Required. The path to the directory containing the PySCVUC diretory.````
                         
 ````Example Usage: --PySCVUC_Path /home/scripts/PySCVUC````
 
