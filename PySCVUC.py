@@ -45,8 +45,8 @@ from multiprocessing import Pool
 "Command Line Arguments"
 #########################################################################
 parser = argparse.ArgumentParser(description = "Denoising and classification pipeline for paired amplicon sequencing data. \
-                                                In order to use this pipeline SeqPrep, CutAdapt 1.14, USearch 10.0.240, \
-                                                VSearch 2.8.2, and the RDP Tools must be installed and the location \
+                                                In order to use this pipeline SeqPrep, CutAdapt 2.1, USearch 10.0.240, \
+                                                VSearch 2.8.2, and the RDP Classifier 2.12 must be installed and the location \
                                                 of each of the programs must be in your path. \
                                                 In addition, this pipeline is compatable with Python 3.4+ and the following \
                                                 Python dependencies are needed: NumPy, Pandas, BioPython, and Scipy.  \
