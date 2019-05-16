@@ -747,7 +747,7 @@ if __name__ == "__main__":
 
     #Dictionary containing command to use each training set
     classifier_dict = {"COI": "java -Xmx8g -jar %s classify -t %sPySCVUC/training_files/COI/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path),
-                       "18S": "java -Xmx8g -jar %s classify -t %sPySCVUC/training_files/18Sv32/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
+                       "18S": "java -Xmx8g -jar %s classify -t %sPySCVUC/training_files/18S/rRNAClassifier.properties -o results.out cat.denoised" %(rdp_path, install_path)}
 
     primer_pairs = vars(args)["primers"].split("-")
     amplicons = vars(args)["amplicon_names"].split("-")
