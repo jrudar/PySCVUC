@@ -409,12 +409,20 @@ class NGSPipelineStats:
         writer = pd.ExcelWriter("taxonomic_assignments_raw.xlsx", 
                                 engine = "xlsxwriter")
 
-        tax_df["COI_GlobalESV"] = tax_df[["Amplicon", "GlobalESV"]].apply(lambda entry: "_".join(entry), axis = 1)
+        amplicons = tax_df["Amplicon"].values
+        esv_ids = tax_df["GlobalESV"].values
+        amp_esv = ["%s_%s" %(amp, esv_ids[i]) for i, amp in enumerate(amplicons)]
+        tax_df["Amplicon_GlobalESV"] = pd.Series(amp_esv, tax_df.index)      
 
-        tax_df = tax_df[self.final_cols]
+        final_cols = ["Amplicon_GlobalESV", "SampleName"]
+        final_cols.extend(tax_df.columns.values[3:])
 
-        tax_df.to_excel(writer, 
-                        sheet_name = "RDP 2.12 Taxonomic Results")
+        print(final_cols)
+
+        final_tax_df = tax_df[final_cols]
+
+        final_tax_df.to_excel(writer, 
+                              sheet_name = "RDP 2.12 Taxonomic Results")
 
         cutoff_table_df.to_excel(writer, 
                                  sheet_name = "RDP Classifier 2.12 Cutoffs")
